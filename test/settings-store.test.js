@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { DEFAULT_SETTINGS, mergeWithDefaults, loadSettings, saveSettings } = require('../src/main/settings-store');
+const { DEFAULT_SETTINGS, mergeWithDefaults, loadSettings, saveSettings, deepMerge } = require('../src/main/settings-store');
 
 test('DEFAULT_SETTINGS has expected sections and port', () => {
   assert.equal(DEFAULT_SETTINGS.connection.port, 4317);
@@ -40,4 +40,11 @@ test('loadSettings returns defaults on corrupt JSON', () => {
   const s = loadSettings(p);
   assert.equal(s.connection.port, 4317);
   fs.unlinkSync(p);
+});
+
+test('deepMerge preserves sibling keys (settings:set fix)', () => {
+  const current = mergeWithDefaults({ notifications: { events: { Stop: false } } });
+  const next = mergeWithDefaults(deepMerge(current, { notifications: { durationMs: 4000 } }));
+  assert.equal(next.notifications.durationMs, 4000);   // applied
+  assert.equal(next.notifications.events.Stop, false); // sibling preserved, NOT reset to default true
 });

@@ -73,6 +73,9 @@ async function applySettings(next) {
     server = createEventServer({ port: settings.connection.port, token: settings.connection.token, onEvent: handleEvent });
     await server.start();
   }
+  if (hoverInterval) { clearInterval(hoverInterval); hoverInterval = null; }
+  lastHover = false;
+  startHoverWatch();
 }
 
 function startHoverWatch() {
@@ -119,7 +122,7 @@ app.whenReady().then(async () => {
   const { registerIpc } = require('./ipc');
   registerIpc({
     getSettings: () => settings,
-    setSettings: (next) => { applySettings(next); },
+    setSettings: async (next) => { await applySettings(next); },
     settingsPath: SETTINGS_PATH,
     notchSend: (payload) => notchWin.webContents.send('notch:display', payload),
     scriptPath: path.join(__dirname, '../../hooks/notify.js'),

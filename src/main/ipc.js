@@ -2,7 +2,7 @@ const { ipcMain, screen } = require('electron');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { mergeWithDefaults, saveSettings } = require('./settings-store');
+const { mergeWithDefaults, saveSettings, deepMerge } = require('./settings-store');
 const { isInstalled, mergeHooks, buildHookCommand } = require('./hooks-installer');
 const { normalizeEvent, mapToDisplay } = require('./event-mapper');
 const { durationFor } = require('./notify-policy');
@@ -12,9 +12,9 @@ const claudeSettingsPath = () => path.join(os.homedir(), '.claude', 'settings.js
 function registerIpc({ getSettings, setSettings, settingsPath, notchSend, scriptPath, getPort }) {
   ipcMain.handle('settings:get', () => getSettings());
 
-  ipcMain.handle('settings:set', (_e, partial) => {
-    const next = mergeWithDefaults({ ...getSettings(), ...partial });
-    setSettings(next);
+  ipcMain.handle('settings:set', async (_e, partial) => {
+    const next = mergeWithDefaults(deepMerge(getSettings(), partial));
+    await setSettings(next);
     saveSettings(settingsPath(), next);
     return next;
   });

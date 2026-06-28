@@ -63,4 +63,4 @@ function saveSettings(filePath, settings) {
   fs.writeFileSync(filePath, JSON.stringify(settings, null, 2), 'utf8');
 }
 
-module.exports = { DEFAULT_SETTINGS, mergeWithDefaults, loadSettings, saveSettings };
+module.exports = { DEFAULT_SETTINGS, mergeWithDefaults, loadSettings, saveSettings, deepMerge };
