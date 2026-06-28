@@ -1,7 +1,7 @@
 const http = require('node:http');
 const { normalizeEvent } = require('./event-mapper');
 
-function createEventServer({ port, token = '', onEvent, maxFallback = 10 }) {
+function createEventServer({ port = 4317, token = '', onEvent, maxFallback = 10 }) {
   let server = null;
   let activePort = null;
 
@@ -13,11 +13,14 @@ function createEventServer({ port, token = '', onEvent, maxFallback = 10 }) {
       res.writeHead(401); res.end(); return;
     }
     let body = '';
+    let tooLarge = false;
     req.on('data', (c) => {
+      if (tooLarge) return;
       body += c;
-      if (body.length > 1_000_000) req.destroy();
+      if (body.length > 1_000_000) { tooLarge = true; res.writeHead(413); res.end(); req.destroy(); }
     });
     req.on('end', () => {
+      if (tooLarge) return;
       let parsed = null;
       try { parsed = JSON.parse(body); } catch { /* ignore */ }
       const ev = normalizeEvent(parsed);

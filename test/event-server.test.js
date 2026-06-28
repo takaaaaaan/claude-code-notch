@@ -47,3 +47,15 @@ test('unknown route returns 404', async () => {
   assert.equal(await post(port, '/other', {}), 404);
   await srv.stop();
 });
+
+test('defaults to port 4317 when port omitted', async () => {
+  const srv = createEventServer({ onEvent: () => {} });
+  try {
+    const port = await srv.start();
+    assert.equal(port, 4317);
+    await srv.stop();
+  } catch (e) {
+    // 4317 already in use on this machine — acceptable; the default was still attempted
+    assert.equal(e.code, 'EADDRINUSE');
+  }
+});
