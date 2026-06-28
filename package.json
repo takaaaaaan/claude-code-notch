@@ -1,0 +1,15 @@
+{
+  "name": "claude-notch",
+  "version": "0.1.0",
+  "description": "Claude Code notch-style overlay for Windows",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}
