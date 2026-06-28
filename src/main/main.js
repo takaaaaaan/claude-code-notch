@@ -6,10 +6,12 @@ const { mapToDisplay } = require('./event-mapper');
 const { computeBounds } = require('./position');
 const { triggerZone, isInZone } = require('./hover');
 const { createTray } = require('./tray-controller');
+const { durationFor, eventEnabled } = require('./notify-policy');
 
 const SETTINGS_PATH = () => path.join(app.getPath('userData'), 'settings.json');
 
 let notchWin = null;
+let settingsWin = null;
 let settings = null;
 let server = null;
 let hoverInterval = null;
@@ -39,33 +41,38 @@ function createNotch() {
   positionNotch();
 }
 
-function durationFor(event) {
-  const per = settings.notifications.perEventDurationMs[event];
-  return typeof per === 'number' ? per : settings.notifications.durationMs;
-}
-
-function eventEnabled(event) {
-  const n = settings.notifications.events;
-  if (event === 'Stop') return n.Stop;
-  if (event === 'Notification') return n.Notification;
-  if (event === 'PreToolUse' || event === 'PostToolUse') return n.toolUse;
-  if (event === 'SubagentStop') return n.subagent;
-  return true;
-}
-
 function handleEvent(ev) {
   if (settings.notifications.dnd) return;
-  if (!eventEnabled(ev.event)) return;
+  if (!eventEnabled(settings, ev.event)) return;
   const cmd = mapToDisplay(ev);
-  notchWin.webContents.send('notch:display', { cmd, durationMs: durationFor(ev.event) });
+  notchWin.webContents.send('notch:display', { cmd, durationMs: durationFor(settings, ev.event) });
 }
 
 function openSettings() {
-  // Stub — real implementation comes in Task 10
+  if (settingsWin && !settingsWin.isDestroyed()) { settingsWin.focus(); return; }
+  settingsWin = new BrowserWindow({
+    width: 720, height: 560, title: 'Claude Notch 設定',
+    webPreferences: { preload: path.join(__dirname, '../preload/settings-preload.js') },
+  });
+  settingsWin.loadFile(path.join(__dirname, '../renderer/settings/settings.html'));
 }
 
 function applyAutostart() {
   app.setLoginItemSettings({ openAtLogin: !!settings.general.autostart });
+}
+
+async function applySettings(next) {
+  const portChanged = next.connection.port !== settings.connection.port
+    || next.connection.token !== settings.connection.token;
+  settings = next;
+  positionNotch();
+  applyAutostart();
+  if (tray) tray.setDnd(settings.notifications.dnd);
+  if (portChanged) {
+    await server.stop();
+    server = createEventServer({ port: settings.connection.port, token: settings.connection.token, onEvent: handleEvent });
+    await server.start();
+  }
 }
 
 function startHoverWatch() {
@@ -108,8 +115,18 @@ app.whenReady().then(async () => {
   });
   tray.setConnected(true);
   applyAutostart();
+
+  const { registerIpc } = require('./ipc');
+  registerIpc({
+    getSettings: () => settings,
+    setSettings: (next) => { applySettings(next); },
+    settingsPath: SETTINGS_PATH,
+    notchSend: (payload) => notchWin.webContents.send('notch:display', payload),
+    scriptPath: path.join(__dirname, '../../hooks/notify.js'),
+    getPort: () => server.port,
+  });
 });
 
 app.on('window-all-closed', (e) => { e.preventDefault(); }); // stay resident in tray (Task 11)
 
-module.exports = { __test: { durationFor: () => durationFor } };
+module.exports = {};
