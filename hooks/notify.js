@@ -7,9 +7,9 @@ function readStdin() {
     let data = '';
     if (process.stdin.isTTY) { resolve('{}'); return; }
     process.stdin.setEncoding('utf8');
+    const t = setTimeout(() => resolve(data || '{}'), 400);
     process.stdin.on('data', (c) => { data += c; });
-    process.stdin.on('end', () => resolve(data || '{}'));
-    setTimeout(() => resolve(data || '{}'), 400); // never hang
+    process.stdin.on('end', () => { clearTimeout(t); resolve(data || '{}'); });
   });
 }
 
@@ -29,4 +29,4 @@ async function main() {
   req.end();
 }
 
-main();
+main().catch(() => process.exit(0));
