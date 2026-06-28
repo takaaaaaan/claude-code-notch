@@ -1,10 +1,11 @@
 const { app, BrowserWindow, screen } = require('electron');
 const path = require('node:path');
-const { loadSettings } = require('./settings-store');
+const { loadSettings, saveSettings } = require('./settings-store');
 const { createEventServer } = require('./event-server');
 const { mapToDisplay } = require('./event-mapper');
 const { computeBounds } = require('./position');
 const { triggerZone, isInZone } = require('./hover');
+const { createTray } = require('./tray-controller');
 
 const SETTINGS_PATH = () => path.join(app.getPath('userData'), 'settings.json');
 
@@ -13,6 +14,7 @@ let settings = null;
 let server = null;
 let hoverInterval = null;
 let lastHover = false;
+let tray = null;
 
 function getDisplay() {
   const id = settings.appearance.displayId;
@@ -58,6 +60,14 @@ function handleEvent(ev) {
   notchWin.webContents.send('notch:display', { cmd, durationMs: durationFor(ev.event) });
 }
 
+function openSettings() {
+  // Stub — real implementation comes in Task 10
+}
+
+function applyAutostart() {
+  app.setLoginItemSettings({ openAtLogin: !!settings.general.autostart });
+}
+
 function startHoverWatch() {
   if (!settings.appearance.hoverReveal) return;
   hoverInterval = setInterval(() => {
@@ -83,6 +93,21 @@ app.whenReady().then(async () => {
   });
   await server.start();
   startHoverWatch();
+  tray = createTray({
+    onOpenSettings: () => openSettings(),
+    onQuit: () => {
+      if (hoverInterval) clearInterval(hoverInterval);
+      if (tray) tray.destroy();
+      app.exit(0);
+    },
+    onToggleDnd: () => {
+      settings.notifications.dnd = !settings.notifications.dnd;
+      saveSettings(SETTINGS_PATH(), settings);
+      tray.setDnd(settings.notifications.dnd);
+    },
+  });
+  tray.setConnected(true);
+  applyAutostart();
 });
 
 app.on('window-all-closed', (e) => { e.preventDefault(); }); // stay resident in tray (Task 11)
