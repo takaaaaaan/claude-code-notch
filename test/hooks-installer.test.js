@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { HOOK_EVENTS, buildHookCommand, buildHooksFragment, isInstalled, mergeHooks } = require('../src/main/hooks-installer');
+const { HOOK_EVENTS, buildHookCommand, buildHooksFragment, isInstalled, mergeHooks, parseExistingSettings } = require('../src/main/hooks-installer');
 
 const SCRIPT = 'C:\\app\\hooks\\notify.js';
 
@@ -37,4 +37,21 @@ test('mergeHooks does not mutate input', () => {
   const input = { hooks: {} };
   mergeHooks(input, SCRIPT, 4317);
   assert.deepEqual(input, { hooks: {} });
+});
+
+test('parseExistingSettings: null/empty -> empty object, no error', () => {
+  assert.deepEqual(parseExistingSettings(null), { settings: {}, parseError: null });
+  assert.deepEqual(parseExistingSettings('   '), { settings: {}, parseError: null });
+});
+
+test('parseExistingSettings: valid JSON parses', () => {
+  const r = parseExistingSettings('{"hooks":{}}');
+  assert.equal(r.parseError, null);
+  assert.deepEqual(r.settings, { hooks: {} });
+});
+
+test('parseExistingSettings: non-empty invalid JSON returns parseError and null settings (do not clobber)', () => {
+  const r = parseExistingSettings('{ not json');
+  assert.equal(r.settings, null);
+  assert.ok(r.parseError);
 });

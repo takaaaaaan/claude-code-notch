@@ -39,4 +39,11 @@ function mergeHooks(settings, scriptPath, port) {
   return next;
 }
 
-module.exports = { HOOK_EVENTS, buildHookCommand, buildHooksFragment, isInstalled, mergeHooks };
+function parseExistingSettings(raw) {
+  // raw: string|null  -> { settings, parseError }
+  if (raw == null || String(raw).trim() === '') return { settings: {}, parseError: null };
+  try { return { settings: JSON.parse(raw), parseError: null }; }
+  catch (e) { return { settings: null, parseError: e.message }; }
+}
+
+module.exports = { HOOK_EVENTS, buildHookCommand, buildHooksFragment, isInstalled, mergeHooks, parseExistingSettings };

@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { mergeWithDefaults, saveSettings, deepMerge } = require('./settings-store');
-const { isInstalled, mergeHooks, buildHookCommand } = require('./hooks-installer');
+const { isInstalled, mergeHooks, buildHookCommand, parseExistingSettings } = require('./hooks-installer');
 const { normalizeEvent, mapToDisplay } = require('./event-mapper');
 const { durationFor } = require('./notify-policy');
 
@@ -23,18 +23,25 @@ function registerIpc({ getSettings, setSettings, settingsPath, notchSend, script
     screen.getAllDisplays().map((d, i) => ({ id: d.id, label: `モニター ${i + 1} (${d.size.width}x${d.size.height})` })));
 
   ipcMain.handle('hooks:status', () => {
-    let claude = {};
-    try { claude = JSON.parse(fs.readFileSync(claudeSettingsPath(), 'utf8')); } catch { claude = {}; }
-    return { installed: isInstalled(claude, scriptPath), command: buildHookCommand(scriptPath, getPort()), claudeSettingsPath: claudeSettingsPath() };
+    let raw = null;
+    try { raw = fs.readFileSync(claudeSettingsPath(), 'utf8'); } catch { raw = null; }
+    const { settings: claude, parseError } = parseExistingSettings(raw);
+    const command = buildHookCommand(scriptPath, getPort());
+    if (parseError) return { installed: false, parseError: true, command, claudeSettingsPath: claudeSettingsPath() };
+    return { installed: isInstalled(claude, scriptPath), command, claudeSettingsPath: claudeSettingsPath() };
   });
 
   ipcMain.handle('hooks:install', () => {
-    let claude = {};
-    try { claude = JSON.parse(fs.readFileSync(claudeSettingsPath(), 'utf8')); } catch { claude = {}; }
+    let raw = null;
+    try { raw = fs.readFileSync(claudeSettingsPath(), 'utf8'); } catch { raw = null; }
+    const { settings: claude, parseError } = parseExistingSettings(raw);
+    if (parseError) {
+      return { ok: false, error: '既存の ~/.claude/settings.json を解析できませんでした。ファイルを確認してから再試行してください。' };
+    }
     const merged = mergeHooks(claude, scriptPath, getPort());
     fs.mkdirSync(path.dirname(claudeSettingsPath()), { recursive: true });
     fs.writeFileSync(claudeSettingsPath(), JSON.stringify(merged, null, 2), 'utf8');
-    return { ok: true, installed: isInstalled(merged, scriptPath) };
+    return { ok: true, installed: true };
   });
 
   ipcMain.handle('test:event', (_e, eventName) => {

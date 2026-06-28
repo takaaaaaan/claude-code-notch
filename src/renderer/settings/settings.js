@@ -11,7 +11,11 @@ async function save(partial) { settings = await window.api.setSettings(partial);
 
 async function refreshHooks() {
   const st = await window.api.hooksStatus();
-  $('#hooksStatus').textContent = st.installed ? '✅ 登録済み' : '⚠ 未登録';
+  if (st.parseError) {
+    $('#hooksStatus').textContent = '⚠ settings.json を解析できません';
+  } else {
+    $('#hooksStatus').textContent = st.installed ? '✅ 登録済み' : '⚠ 未登録';
+  }
   $('#snippet').textContent = st.command;
 }
 
@@ -35,11 +39,18 @@ async function init() {
     displays.map((d) => `<option value="${d.id}">${d.label}</option>`).join('');
   $('#displayId').value = settings.appearance.displayId || '';
 
+  $('#connStatus').textContent = `🟢 ポート ${settings.connection.port} で待機中（localhost のみ）`;
+
   await refreshHooks();
 
   $('#autostart').addEventListener('change', (e) => save({ general: { autostart: e.target.checked } }));
   $('#theme').addEventListener('change', (e) => save({ general: { theme: e.target.value } }));
-  $('#port').addEventListener('change', (e) => save({ connection: { port: Number(e.target.value) } }).then(refreshHooks));
+  $('#port').addEventListener('change', (e) => {
+    save({ connection: { port: Number(e.target.value) } }).then((s) => {
+      $('#connStatus').textContent = `🟢 ポート ${s.connection.port} で待機中（localhost のみ）`;
+      return refreshHooks();
+    });
+  });
   $('#duration').addEventListener('input', (e) => { $('#durationVal').textContent = e.target.value + 'ms'; save({ notifications: { durationMs: Number(e.target.value) } }); });
   document.querySelectorAll('[data-ev]').forEach((c) => c.addEventListener('change', () => save({ notifications: { events: { [c.dataset.ev]: c.checked } } })));
   $('#hoverReveal').addEventListener('change', (e) => save({ appearance: { hoverReveal: e.target.checked } }));
@@ -49,7 +60,14 @@ async function init() {
   $('#offsetY').addEventListener('change', (e) => save({ appearance: { offsetY: Number(e.target.value) } }));
   $('#displayId').addEventListener('change', (e) => save({ appearance: { displayId: e.target.value ? Number(e.target.value) : null } }));
   $('#charEnabled').addEventListener('change', (e) => save({ character: { enabled: e.target.checked } }));
-  $('#installHooks').addEventListener('click', async () => { await window.api.hooksInstall(); await refreshHooks(); });
+  $('#installHooks').addEventListener('click', async () => {
+    const result = await window.api.hooksInstall();
+    if (result && result.ok === false) {
+      $('#hooksStatus').textContent = result.error;
+    } else {
+      await refreshHooks();
+    }
+  });
   document.querySelectorAll('[data-test]').forEach((b) => b.addEventListener('click', () => window.api.testEvent(b.dataset.test)));
 }
 init();

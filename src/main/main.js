@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen } = require('electron');
+const { app, BrowserWindow, screen, nativeTheme } = require('electron');
 const path = require('node:path');
 const { loadSettings, saveSettings } = require('./settings-store');
 const { createEventServer } = require('./event-server');
@@ -45,6 +45,7 @@ function handleEvent(ev) {
   if (settings.notifications.dnd) return;
   if (!eventEnabled(settings, ev.event)) return;
   const cmd = mapToDisplay(ev);
+  if (cmd.kind === 'character' && !settings.character.enabled) return;
   notchWin.webContents.send('notch:display', { cmd, durationMs: durationFor(settings, ev.event) });
 }
 
@@ -67,6 +68,7 @@ async function applySettings(next) {
   settings = next;
   positionNotch();
   applyAutostart();
+  nativeTheme.themeSource = settings.general.theme;
   if (tray) tray.setDnd(settings.notifications.dnd);
   if (portChanged) {
     await server.stop();
@@ -95,6 +97,7 @@ function startHoverWatch() {
 
 app.whenReady().then(async () => {
   settings = loadSettings(SETTINGS_PATH());
+  nativeTheme.themeSource = settings.general.theme;
   createNotch();
   server = createEventServer({
     port: settings.connection.port,
