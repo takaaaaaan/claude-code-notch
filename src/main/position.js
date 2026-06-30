@@ -5,6 +5,13 @@ const SIZES = {
 };
 
 const SIDE = new Set(['left-center', 'right-center']);
+const BOTTOM = new Set(['bottom-left', 'bottom-right']);
+
+function horizontalX(preset, area, width, offsetX) {
+  if (preset === 'top-left' || preset === 'bottom-left') return area.x + offsetX;
+  if (preset === 'top-right' || preset === 'bottom-right') return area.x + area.width - width + offsetX;
+  return Math.round(area.x + (area.width - width) / 2) + offsetX; // top-center
+}
 
 function computeBounds(appearance, display) {
   const { preset = 'top-center', offsetX = 0, offsetY = 0, size = 'medium' } = appearance || {};
@@ -21,11 +28,8 @@ function computeBounds(appearance, display) {
 
   const width = s.main;
   const height = s.cross;
-  let x;
-  if (preset === 'top-left') x = area.x + offsetX;
-  else if (preset === 'top-right') x = area.x + area.width - width + offsetX;
-  else x = Math.round(area.x + (area.width - width) / 2) + offsetX; // top-center
-  const y = area.y + offsetY;
+  const x = horizontalX(preset, area, width, offsetX);
+  const y = BOTTOM.has(preset) ? area.y + area.height - height + offsetY : area.y + offsetY;
   return { x, y, width, height };
 }
 
@@ -52,11 +56,8 @@ function computeStageBounds(appearance, display) {
 
   const width = Math.min(STAGE.topW, area.width);
   const height = Math.min(STAGE.topH, area.height);
-  let x;
-  if (preset === 'top-left') x = area.x + offsetX;
-  else if (preset === 'top-right') x = area.x + area.width - width + offsetX;
-  else x = Math.round(area.x + (area.width - width) / 2) + offsetX; // top-center
-  const y = area.y + offsetY;
+  const x = horizontalX(preset, area, width, offsetX);
+  const y = BOTTOM.has(preset) ? area.y + area.height - height + offsetY : area.y + offsetY;
   return { x, y, width, height };
 }
 

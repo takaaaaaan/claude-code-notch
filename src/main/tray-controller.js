@@ -2,8 +2,9 @@ const { Tray, Menu, nativeImage } = require('electron');
 const path = require('node:path');
 
 function createTray({ onOpenSettings, onQuit, onToggleDnd }) {
-  const icon = nativeImage.createFromPath(path.join(__dirname, '../../assets/tray.png'));
-  const tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon);
+  const raw = nativeImage.createFromPath(path.join(__dirname, '../../assets/icon.png'));
+  const icon = raw.isEmpty() ? nativeImage.createEmpty() : raw.resize({ width: 16, height: 16 });
+  const tray = new Tray(icon);
   let connected = false;
   let dnd = false;
 

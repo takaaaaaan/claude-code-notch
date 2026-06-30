@@ -14,8 +14,8 @@ function hideSoon(ms) {
 }
 
 function setCharacter(state) {
+  // Only swap the state class — the orbit/core child elements must stay intact.
   el('mascot').className = 'mascot ' + state;
-  el('mascot').textContent = { idle: '🤖', working: '🛠️', sub: '👥', done: '✅', wait: '⏳' }[state] || '🤖';
 }
 
 function showCard(cmd, durationMs) {

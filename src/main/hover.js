@@ -1,6 +1,7 @@
 const { computeBounds } = require('./position');
 
 const SIDE = new Set(['left-center', 'right-center']);
+const BOTTOM = new Set(['bottom-left', 'bottom-right']);
 
 function triggerZone(appearance, display) {
   const b = computeBounds(appearance, display);
@@ -10,6 +11,9 @@ function triggerZone(appearance, display) {
   if (SIDE.has(appearance.preset)) {
     const x = appearance.preset === 'left-center' ? area.x : area.x + area.width - t;
     return { x, y: b.y, width: t, height: b.height };
+  }
+  if (BOTTOM.has(appearance.preset)) {
+    return { x: b.x, y: area.y + area.height - t, width: b.width, height: t };
   }
   return { x: b.x, y: area.y, width: b.width, height: t };
 }

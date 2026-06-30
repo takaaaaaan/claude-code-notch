@@ -71,6 +71,7 @@ function openSettings() {
   if (settingsWin && !settingsWin.isDestroyed()) { settingsWin.focus(); return; }
   settingsWin = new BrowserWindow({
     width: 720, height: 560, title: 'Claude Notch 設定',
+    icon: path.join(__dirname, '../../assets/icon.png'),
     webPreferences: { preload: path.join(__dirname, '../preload/settings-preload.js') },
   });
   settingsWin.loadFile(path.join(__dirname, '../renderer/settings/settings.html'));

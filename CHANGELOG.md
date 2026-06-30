@@ -7,6 +7,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- App icon: an orbiting-circles logo (`assets/icon.png`) is now used for the settings window, the tray, and the packaged installer/exe (previously the icon was blank/transparent in the taskbar).
+- Notch character is now the branded orbiting-circles logo (a central circle with three small circles rotating around it) instead of an emoji; spin speed reflects activity (idle slow, tool use / subagent fast, task-complete paused).
+- Two more notch position presets: **bottom-left** and **bottom-right** (the notch slides up from the bottom edge).
 - "Remove Hooks" button in the settings Connection tab: removes all claude-notch hook entries from `~/.claude/settings.json` (preserving other hooks). Matching is path-agnostic, so it also clears stale/broken entries (e.g. the old `app.asar` path), and reinstalling now replaces any prior entry instead of leaving duplicates.
 
 ### Fixed

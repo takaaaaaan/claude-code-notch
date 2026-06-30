@@ -1,4 +1,4 @@
-:root { --accent:#d97757; --ok:#6cc070; --warn:#e0b341; --text:#f5f5f4; --dim:#a1a1aa; }
+:root { --accent:#d97757; --brand:#f2691b; --ok:#6cc070; --warn:#e0b341; --text:#f5f5f4; --dim:#a1a1aa; }
 * { box-sizing:border-box; margin:0; padding:0; }
 html,body { width:100%; height:100%; background:transparent; overflow:hidden; font-family:"Segoe UI",system-ui,sans-serif; }
 body { position:relative; }
@@ -31,15 +31,33 @@ body[data-pos="left-center"] .notch.shown { transform:translateY(-50%) translate
 /* right-center (vertical pill) */
 body[data-pos="right-center"] .notch { right:0; top:50%; border-radius:22px 0 0 22px; transform:translateY(-50%) translateX(130%); }
 body[data-pos="right-center"] .notch.shown { transform:translateY(-50%) translateX(0); }
-.mascot { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; font-size:20px; flex-shrink:0;
-  background:linear-gradient(135deg,var(--accent),#b85c3e); transition:background .3s; }
-.mascot.working { background:linear-gradient(135deg,#5b8def,#3a6fd8); animation:pulse 1.1s infinite; }
-.mascot.sub { background:linear-gradient(135deg,#9b7ddb,#7a55c4); animation:bob .7s infinite; }
-.mascot.done { background:linear-gradient(135deg,var(--ok),#4a9e50); }
-.mascot.wait { background:linear-gradient(135deg,var(--warn),#c79a2a); animation:shake .5s infinite; }
-@keyframes pulse {0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-@keyframes bob {0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+/* bottom-left (slides up from the bottom edge) */
+body[data-pos="bottom-left"] .notch { bottom:0; left:8px; border-radius:22px 22px 0 0; transform:translateY(130%); }
+body[data-pos="bottom-left"] .notch.shown { transform:translateY(0); }
+
+/* bottom-right */
+body[data-pos="bottom-right"] .notch { bottom:0; right:8px; border-radius:22px 22px 0 0; transform:translateY(130%); }
+body[data-pos="bottom-right"] .notch.shown { transform:translateY(0); }
+/* Brand mascot: a big central circle with three small circles orbiting it,
+   matching the app icon. Spin speed encodes activity. */
+.mascot { position:relative; width:34px; height:34px; flex-shrink:0; }
+.mascot .core { position:absolute; top:50%; left:50%; width:14px; height:14px; margin:-7px 0 0 -7px;
+  border-radius:50%; background:var(--brand); transition:background .3s; }
+.mascot .orbit { position:absolute; inset:0; animation:spin 6s linear infinite; }
+.mascot .d { position:absolute; width:5px; height:5px; border-radius:50%; background:var(--brand); transition:background .3s; }
+.mascot .d1 { left:14.5px; top:1.5px; }
+.mascot .d2 { left:25.8px; top:21px; }
+.mascot .d3 { left:3.2px; top:21px; }
+@keyframes spin { to { transform:rotate(360deg); } }
 @keyframes shake {0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+.mascot.working .orbit { animation-duration:1.1s; }
+.mascot.sub .orbit { animation-duration:.85s; }
+.mascot.done .orbit { animation-play-state:paused; }
+.mascot.done .core, .mascot.done .d { background:var(--ok); }
+.mascot.wait { animation:shake .5s infinite; }
+.mascot.wait .orbit { animation-duration:1.6s; }
+.mascot.wait .core, .mascot.wait .d { background:var(--warn); }
 .body { display:flex; flex-direction:column; gap:2px; min-width:0; }
 .title { font-size:13px; font-weight:600; white-space:nowrap; }
 .sub { font-size:11px; color:var(--dim); white-space:nowrap; }
