@@ -46,4 +46,11 @@ function parseExistingSettings(raw) {
   catch (e) { return { settings: null, parseError: e.message }; }
 }
 
-module.exports = { HOOK_EVENTS, buildHookCommand, buildHooksFragment, isInstalled, mergeHooks, parseExistingSettings };
+// In a packaged Electron app the hook script lives inside app.asar, which an
+// external `node` process cannot read. electron-builder's asarUnpack extracts
+// hooks/ to app.asar.unpacked; point the hook command at that real file.
+function unpackedScriptPath(p) {
+  return /app\.asar[\\/]/.test(p) ? p.replace(/app\.asar([\\/])/, 'app.asar.unpacked$1') : p;
+}
+
+module.exports = { HOOK_EVENTS, buildHookCommand, buildHooksFragment, isInstalled, mergeHooks, parseExistingSettings, unpackedScriptPath };

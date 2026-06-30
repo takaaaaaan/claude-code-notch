@@ -28,6 +28,9 @@
       "assets/**/*",
       "package.json"
     ],
+    "asarUnpack": [
+      "hooks/**/*"
+    ],
     "win": {
       "target": "nsis"
     },

@@ -7,6 +7,7 @@ const { computeStageBounds } = require('./position');
 const { triggerZone, isInZone } = require('./hover');
 const { createTray } = require('./tray-controller');
 const { durationFor, eventEnabled } = require('./notify-policy');
+const { unpackedScriptPath } = require('./hooks-installer');
 
 const SETTINGS_PATH = () => path.join(app.getPath('userData'), 'settings.json');
 
@@ -147,7 +148,7 @@ app.whenReady().then(async () => {
     setSettings: async (next) => { await applySettings(next); },
     settingsPath: SETTINGS_PATH,
     notchSend: (payload) => notchWin.webContents.send('notch:display', payload),
-    scriptPath: path.join(__dirname, '../../hooks/notify.js'),
+    scriptPath: unpackedScriptPath(path.join(__dirname, '../../hooks/notify.js')),
     getPort: () => server.port,
   });
 });

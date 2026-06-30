@@ -49,13 +49,16 @@ test('unknown route returns 404', async () => {
 });
 
 test('defaults to port 4317 when port omitted', async () => {
-  const srv = createEventServer({ onEvent: () => {} });
+  // maxFallback: 0 so a busy 4317 rejects with EADDRINUSE instead of silently
+  // binding 4318; finally-stop so the server can never leak and hang the runner.
+  const srv = createEventServer({ onEvent: () => {}, maxFallback: 0 });
   try {
     const port = await srv.start();
     assert.equal(port, 4317);
-    await srv.stop();
   } catch (e) {
     // 4317 already in use on this machine — acceptable; the default was still attempted
     assert.equal(e.code, 'EADDRINUSE');
+  } finally {
+    await srv.stop();
   }
 });
