@@ -6,6 +6,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- "Remove Hooks" button in the settings Connection tab: removes all claude-notch hook entries from `~/.claude/settings.json` (preserving other hooks). Matching is path-agnostic, so it also clears stale/broken entries (e.g. the old `app.asar` path), and reinstalling now replaces any prior entry instead of leaving duplicates.
+
 ### Fixed
 - Hooks broken in the installed (packaged) app: the registered command pointed at `notify.js` inside `app.asar`, which an external `node` cannot read (`MODULE_NOT_FOUND` on every Stop hook). Unpack `hooks/` from the asar (`asarUnpack`) and register the `app.asar.unpacked` path. Re-run one-click Hooks install after updating.
 - `npm test` could hang when port 4317 was already in use (e.g. the app running): the event-server default-port test leaked a server on fallback. It no longer falls back and always stops.

@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { mergeWithDefaults, saveSettings, deepMerge } = require('./settings-store');
-const { isInstalled, mergeHooks, buildHookCommand, parseExistingSettings } = require('./hooks-installer');
+const { isInstalled, mergeHooks, removeHooks, buildHookCommand, parseExistingSettings } = require('./hooks-installer');
 const { normalizeEvent, mapToDisplay } = require('./event-mapper');
 const { durationFor } = require('./notify-policy');
 
@@ -42,6 +42,19 @@ function registerIpc({ getSettings, setSettings, settingsPath, notchSend, script
     fs.mkdirSync(path.dirname(claudeSettingsPath()), { recursive: true });
     fs.writeFileSync(claudeSettingsPath(), JSON.stringify(merged, null, 2), 'utf8');
     return { ok: true, installed: true };
+  });
+
+  ipcMain.handle('hooks:remove', () => {
+    let raw = null;
+    try { raw = fs.readFileSync(claudeSettingsPath(), 'utf8'); } catch { raw = null; }
+    const { settings: claude, parseError } = parseExistingSettings(raw);
+    if (parseError) {
+      return { ok: false, error: 'parseError' };
+    }
+    const next = removeHooks(claude);
+    fs.mkdirSync(path.dirname(claudeSettingsPath()), { recursive: true });
+    fs.writeFileSync(claudeSettingsPath(), JSON.stringify(next, null, 2), 'utf8');
+    return { ok: true, installed: false };
   });
 
   ipcMain.handle('test:event', (_e, eventName) => {

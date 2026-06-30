@@ -20,6 +20,15 @@ function groupHasScript(group, scriptPath) {
   return (group.hooks || []).some((h) => typeof h.command === 'string' && h.command.includes(scriptPath));
 }
 
+// Recognize OUR hook regardless of where notify.js lives (source checkout,
+// app.asar, or app.asar.unpacked). Used so install/remove operate on every
+// claude-notch entry, not just the one matching the current path — this also
+// lets a reinstall replace a stale/broken (e.g. asar) entry.
+const OUR_HOOK_RE = /[\\/]hooks[\\/]notify\.js/;
+function groupIsOurs(group) {
+  return (group.hooks || []).some((h) => typeof h.command === 'string' && OUR_HOOK_RE.test(h.command));
+}
+
 function isInstalled(settings, scriptPath) {
   const hooks = settings && settings.hooks;
   if (!hooks) return false;
@@ -32,10 +41,25 @@ function mergeHooks(settings, scriptPath, port) {
   const fragment = buildHooksFragment(scriptPath, port);
   for (const ev of HOOK_EVENTS) {
     const kept = Array.isArray(next.hooks[ev])
-      ? next.hooks[ev].filter((g) => !groupHasScript(g, scriptPath))
+      ? next.hooks[ev].filter((g) => !groupIsOurs(g))
       : [];
     next.hooks[ev] = [...kept, ...fragment[ev]];
   }
+  return next;
+}
+
+// Remove every claude-notch hook entry from all events, preserving foreign
+// hooks. Drops emptied event arrays (and the hooks object if it ends up empty).
+function removeHooks(settings) {
+  const next = JSON.parse(JSON.stringify(settings || {}));
+  if (!next.hooks) return next;
+  for (const ev of HOOK_EVENTS) {
+    if (!Array.isArray(next.hooks[ev])) continue;
+    const kept = next.hooks[ev].filter((g) => !groupIsOurs(g));
+    if (kept.length) next.hooks[ev] = kept;
+    else delete next.hooks[ev];
+  }
+  if (Object.keys(next.hooks).length === 0) delete next.hooks;
   return next;
 }
 
@@ -53,4 +77,4 @@ function unpackedScriptPath(p) {
   return /app\.asar[\\/]/.test(p) ? p.replace(/app\.asar([\\/])/, 'app.asar.unpacked$1') : p;
 }
 
-module.exports = { HOOK_EVENTS, buildHookCommand, buildHooksFragment, isInstalled, mergeHooks, parseExistingSettings, unpackedScriptPath };
+module.exports = { HOOK_EVENTS, buildHookCommand, buildHooksFragment, isInstalled, mergeHooks, removeHooks, parseExistingSettings, unpackedScriptPath };

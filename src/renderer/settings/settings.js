@@ -93,6 +93,14 @@ async function init() {
       await refreshHooks();
     }
   });
+  $('#removeHooks').addEventListener('click', async () => {
+    const result = await window.api.hooksRemove();
+    if (result && result.ok === false) {
+      $('#hooksStatus').textContent = t('hooks.parseError');
+    } else {
+      await refreshHooks();
+    }
+  });
   document.querySelectorAll('[data-test]').forEach((b) => b.addEventListener('click', () => window.api.testEvent(b.dataset.test)));
 }
 init();
