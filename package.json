@@ -13,7 +13,7 @@
     "start": "electron .",
     "test": "node --test",
     "smoke": "electron scripts/smoke-notch.js",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win --publish never"
   },
   "devDependencies": {
     "electron": "^31.0.0",
