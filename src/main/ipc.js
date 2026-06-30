@@ -20,7 +20,7 @@ function registerIpc({ getSettings, setSettings, settingsPath, notchSend, script
   });
 
   ipcMain.handle('displays:list', () =>
-    screen.getAllDisplays().map((d, i) => ({ id: d.id, label: `モニター ${i + 1} (${d.size.width}x${d.size.height})` })));
+    screen.getAllDisplays().map((d, i) => ({ id: d.id, label: `#${i + 1} · ${d.size.width}×${d.size.height}` })));
 
   ipcMain.handle('hooks:status', () => {
     let raw = null;
@@ -36,7 +36,7 @@ function registerIpc({ getSettings, setSettings, settingsPath, notchSend, script
     try { raw = fs.readFileSync(claudeSettingsPath(), 'utf8'); } catch { raw = null; }
     const { settings: claude, parseError } = parseExistingSettings(raw);
     if (parseError) {
-      return { ok: false, error: '既存の ~/.claude/settings.json を解析できませんでした。ファイルを確認してから再試行してください。' };
+      return { ok: false, error: 'parseError' };
     }
     const merged = mergeHooks(claude, scriptPath, getPort());
     fs.mkdirSync(path.dirname(claudeSettingsPath()), { recursive: true });
@@ -45,9 +45,10 @@ function registerIpc({ getSettings, setSettings, settingsPath, notchSend, script
   });
 
   ipcMain.handle('test:event', (_e, eventName) => {
-    const ev = normalizeEvent({ event: eventName, project: 'test', message: 'テスト通知' });
+    const ev = normalizeEvent({ event: eventName, project: 'test' });
     if (!ev) return { ok: false };
-    notchSend({ cmd: mapToDisplay(ev), durationMs: durationFor(getSettings(), eventName) });
+    const lang = getSettings().general.language;
+    notchSend({ cmd: mapToDisplay(ev, lang), durationMs: durationFor(getSettings(), eventName) });
     return { ok: true };
   });
 }

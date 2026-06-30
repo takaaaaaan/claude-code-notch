@@ -1,5 +1,8 @@
 let settings = null;
+let lang = 'ja';
+let displays = [];
 const $ = (s) => document.querySelector(s);
+const t = (key) => (window.I18N[lang] && window.I18N[lang][key]) || window.I18N.en[key] || key;
 
 document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('click', () => {
   document.querySelectorAll('#tabs button').forEach((x) => x.classList.remove('active'));
@@ -7,20 +10,39 @@ document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('cli
   document.querySelectorAll('section').forEach((s) => { s.hidden = s.dataset.panel !== b.dataset.tab; });
 }));
 
+function applyI18n(l) {
+  lang = window.I18N[l] ? l : 'ja';
+  document.documentElement.lang = lang;
+  document.title = t('window.title');
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+}
+
+function renderConnStatus() {
+  $('#connStatus').textContent = t('status.listening').replace('{port}', settings.connection.port);
+}
+
+function renderDisplays() {
+  const sel = $('#displayId');
+  sel.innerHTML = `<option value="">${t('monitor.primary')}</option>`
+    + displays.map((d) => `<option value="${d.id}">${d.label}</option>`).join('');
+  sel.value = settings.appearance.displayId || '';
+}
+
 async function save(partial) { settings = await window.api.setSettings(partial); }
 
 async function refreshHooks() {
   const st = await window.api.hooksStatus();
-  if (st.parseError) {
-    $('#hooksStatus').textContent = '⚠ settings.json を解析できません';
-  } else {
-    $('#hooksStatus').textContent = st.installed ? '✅ 登録済み' : '⚠ 未登録';
-  }
+  $('#hooksStatus').textContent = st.parseError
+    ? t('hooks.parseError')
+    : (st.installed ? t('hooks.installed') : t('hooks.notInstalled'));
   $('#snippet').textContent = st.command;
 }
 
 async function init() {
   settings = await window.api.getSettings();
+  applyI18n(settings.general.language);
+
+  $('#language').value = window.I18N[settings.general.language] ? settings.general.language : 'ja';
   $('#autostart').checked = settings.general.autostart;
   $('#theme').value = settings.general.theme;
   $('#port').value = settings.connection.port;
@@ -34,20 +56,23 @@ async function init() {
   $('#offsetY').value = settings.appearance.offsetY;
   $('#charEnabled').checked = settings.character.enabled;
 
-  const displays = await window.api.listDisplays();
-  $('#displayId').innerHTML = '<option value="">プライマリ</option>' +
-    displays.map((d) => `<option value="${d.id}">${d.label}</option>`).join('');
-  $('#displayId').value = settings.appearance.displayId || '';
-
-  $('#connStatus').textContent = `🟢 ポート ${settings.connection.port} で待機中（localhost のみ）`;
-
+  displays = await window.api.listDisplays();
+  renderDisplays();
+  renderConnStatus();
   await refreshHooks();
 
+  $('#language').addEventListener('change', async (e) => {
+    await save({ general: { language: e.target.value } });
+    applyI18n(settings.general.language);
+    renderConnStatus();
+    renderDisplays();
+    await refreshHooks();
+  });
   $('#autostart').addEventListener('change', (e) => save({ general: { autostart: e.target.checked } }));
   $('#theme').addEventListener('change', (e) => save({ general: { theme: e.target.value } }));
   $('#port').addEventListener('change', (e) => {
-    save({ connection: { port: Number(e.target.value) } }).then((s) => {
-      $('#connStatus').textContent = `🟢 ポート ${s.connection.port} で待機中（localhost のみ）`;
+    save({ connection: { port: Number(e.target.value) } }).then(() => {
+      renderConnStatus();
       return refreshHooks();
     });
   });
@@ -63,7 +88,7 @@ async function init() {
   $('#installHooks').addEventListener('click', async () => {
     const result = await window.api.hooksInstall();
     if (result && result.ok === false) {
-      $('#hooksStatus').textContent = result.error;
+      $('#hooksStatus').textContent = t('hooks.parseError');
     } else {
       await refreshHooks();
     }

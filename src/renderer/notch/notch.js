@@ -50,3 +50,7 @@ window.notch.onHover((isHover) => {
 window.notch.onPos((preset) => {
   document.body.dataset.pos = preset || 'top-center';
 });
+const IDLE_SUB = { en: 'Idle', ja: '待機中', ko: '대기 중' };
+window.notch.onLang((lang) => {
+  el('cSub').textContent = IDLE_SUB[lang] || IDLE_SUB.ja;
+});

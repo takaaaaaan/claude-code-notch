@@ -1,6 +1,6 @@
 {
   "name": "claude-notch",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Claude Code notch-style overlay for Windows",
   "author": "takaaaaaan",
   "license": "MIT",
@@ -22,8 +22,18 @@
   "build": {
     "appId": "com.claudenotch.app",
     "productName": "Claude Notch",
-    "files": ["src/**/*", "hooks/**/*", "assets/**/*", "package.json"],
-    "win": { "target": "nsis" },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+    "files": [
+      "src/**/*",
+      "hooks/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

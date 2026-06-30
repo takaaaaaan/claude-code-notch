@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-06-30
+
+### Added
+- Multilingual UI: settings window and notification cards in English, 日本語, and 한국어, selectable from the General tab (`general.language`). Notch idle text and card defaults localize too.
+
+### Fixed
+- Settings sidebar tabs did nothing: an author `section { display:flex }` rule overrode the user-agent `[hidden] { display:none }`, so hidden panels stayed visible. Added `section[hidden] { display:none }`.
+
 ## [0.1.0] - 2026-06-30
 
 First public release.
@@ -28,4 +36,5 @@ First public release.
 - Tray connection status is static; no custom app icon yet.
 - The installer is unsigned (SmartScreen warning on first run).
 
+[0.2.0]: https://github.com/takaaaaaan/claude-code-notch/releases/tag/v0.2.0
 [0.1.0]: https://github.com/takaaaaaan/claude-code-notch/releases/tag/v0.1.0

@@ -33,6 +33,7 @@ Claude Code (Hooks)  ──POST──▶  localhost:4317  ──▶  Claude Notc
 - **Multiple sessions** — events from several Claude Code instances share one notch; each card is labelled with its project name.
 - **Flexible position** — top-center / top-left / top-right / left edge / right edge, with offset and per-monitor selection.
 - **One-click Hooks install** — registers all five hooks into `~/.claude/settings.json` for you, preserving any hooks you already have.
+- **Multilingual UI** — settings window and notification text in English, 日本語, and 한국어 (switch in the General tab).
 - **Click-through & lightweight** — the transparent overlay never blocks your desktop, and it's display-only (v1 never sends anything back to Claude Code).
 
 ---

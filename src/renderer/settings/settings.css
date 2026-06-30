@@ -4,6 +4,10 @@ body { font-family:"Segoe UI",system-ui,sans-serif; margin:0; display:flex; min-
 #tabs button.active { color:#fff; background:#d97757; }
 main { flex:1; padding:24px; }
 section { display:flex; flex-direction:column; gap:14px; max-width:480px; }
+/* An author `section{display:flex}` rule overrides the user-agent
+   `[hidden]{display:none}` (author origin wins), so hidden panels would stay
+   visible. Re-assert hiding at author level so tab switching works. */
+section[hidden] { display:none; }
 label { display:flex; align-items:center; gap:8px; }
 input,select { background:#222; border:1px solid #333; color:#eee; padding:4px 6px; border-radius:6px; }
 button { cursor:pointer; }

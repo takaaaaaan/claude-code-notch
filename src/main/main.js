@@ -36,6 +36,12 @@ function sendPos() {
   }
 }
 
+function sendLang() {
+  if (notchWin && !notchWin.isDestroyed()) {
+    notchWin.webContents.send('notch:lang', settings.general.language);
+  }
+}
+
 function createNotch() {
   notchWin = new BrowserWindow({
     width: 480, height: 140, frame: false, transparent: true, resizable: false,
@@ -47,7 +53,7 @@ function createNotch() {
   // transparent) stage click-through so it doesn't block the desktop beneath it.
   // Hover reveal still works because it polls the global cursor position.
   notchWin.setIgnoreMouseEvents(true);
-  notchWin.webContents.on('did-finish-load', () => sendPos());
+  notchWin.webContents.on('did-finish-load', () => { sendPos(); sendLang(); });
   notchWin.loadFile(path.join(__dirname, '../renderer/notch/notch.html'));
   positionNotch();
 }
@@ -55,7 +61,7 @@ function createNotch() {
 function handleEvent(ev) {
   if (settings.notifications.dnd) return;
   if (!eventEnabled(settings, ev.event)) return;
-  const cmd = mapToDisplay(ev);
+  const cmd = mapToDisplay(ev, settings.general.language);
   if (cmd.kind === 'character' && !settings.character.enabled) return;
   notchWin.webContents.send('notch:display', { cmd, durationMs: durationFor(settings, ev.event) });
 }
@@ -79,6 +85,7 @@ async function applySettings(next) {
   settings = next;
   positionNotch();
   sendPos();
+  sendLang();
   applyAutostart();
   nativeTheme.themeSource = settings.general.theme;
   if (tray) tray.setDnd(settings.notifications.dnd);
