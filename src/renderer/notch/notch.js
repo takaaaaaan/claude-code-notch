@@ -43,3 +43,6 @@ window.notch.onHover((isHover) => {
   if (isHover) { clearTimeout(hideTimer); show(); }
   else hideSoon(300);
 });
+window.notch.onPos((preset) => {
+  document.body.dataset.pos = preset || 'top-center';
+});

@@ -3,7 +3,7 @@ const path = require('node:path');
 const { loadSettings, saveSettings } = require('./settings-store');
 const { createEventServer } = require('./event-server');
 const { mapToDisplay } = require('./event-mapper');
-const { computeBounds } = require('./position');
+const { computeStageBounds } = require('./position');
 const { triggerZone, isInZone } = require('./hover');
 const { createTray } = require('./tray-controller');
 const { durationFor, eventEnabled } = require('./notify-policy');
@@ -26,17 +26,28 @@ function getDisplay() {
 
 function positionNotch() {
   const display = getDisplay();
-  const b = computeBounds(settings.appearance, display);
+  const b = computeStageBounds(settings.appearance, display);
   notchWin.setBounds(b);
+}
+
+function sendPos() {
+  if (notchWin && !notchWin.isDestroyed()) {
+    notchWin.webContents.send('notch:pos', settings.appearance.preset);
+  }
 }
 
 function createNotch() {
   notchWin = new BrowserWindow({
-    width: 300, height: 60, frame: false, transparent: true, resizable: false,
+    width: 480, height: 140, frame: false, transparent: true, resizable: false,
     skipTaskbar: true, alwaysOnTop: true, focusable: false, hasShadow: false,
     webPreferences: { preload: path.join(__dirname, '../preload/notch-preload.js') },
   });
   notchWin.setAlwaysOnTop(true, 'screen-saver');
+  // Display-only: the notch never receives clicks. Make the (large, mostly
+  // transparent) stage click-through so it doesn't block the desktop beneath it.
+  // Hover reveal still works because it polls the global cursor position.
+  notchWin.setIgnoreMouseEvents(true);
+  notchWin.webContents.on('did-finish-load', () => sendPos());
   notchWin.loadFile(path.join(__dirname, '../renderer/notch/notch.html'));
   positionNotch();
 }
@@ -67,6 +78,7 @@ async function applySettings(next) {
     || next.connection.token !== settings.connection.token;
   settings = next;
   positionNotch();
+  sendPos();
   applyAutostart();
   nativeTheme.themeSource = settings.general.theme;
   if (tray) tray.setDnd(settings.notifications.dnd);
