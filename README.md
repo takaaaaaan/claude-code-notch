@@ -1,130 +1,122 @@
 # Claude Notch for Windows
 
-Claude Code 専用の Windows ノッチ風オーバーレイです。Claude Code の作業状態（思考中・ツール実行・許可待ち・完了）を画面上部に常時表示します。
+> A Dynamic-Island-style overlay for Windows that shows what **Claude Code** is doing — right at the top of your screen.
+
+[![CI](https://github.com/takaaaaaan/claude-code-notch/actions/workflows/ci.yml/badge.svg)](https://github.com/takaaaaaan/claude-code-notch/actions/workflows/ci.yml)
+[![Release](https://github.com/takaaaaaan/claude-code-notch/actions/workflows/release.yml/badge.svg)](https://github.com/takaaaaaan/claude-code-notch/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6.svg)](#)
+
+🌐 **English** · [日本語](./docs/README.ja.md) · [한국어](./docs/README.ko.md)
+
+Claude Notch listens for [Claude Code Hooks](https://docs.claude.com/en/docs/claude-code/hooks) over a local HTTP server and renders them as a notch-style island that slides down from the top of the screen. Important moments (task done, waiting for you) appear as cards; lighter activity (tool use, subagents) animates a little character.
+
+```
+Claude Code (Hooks)  ──POST──▶  localhost:4317  ──▶  Claude Notch overlay
+```
+
+> **Preview the UI right now:** open [`mockups/notch-states.html`](./mockups/notch-states.html) in any browser and click through the states.
 
 ---
 
-## 概要
+## Features
 
-Claude Notch は、Claude Code が送出する Hooks イベントをローカルで受信し、画面上部にノッチ風のオーバーレイとして状態を表示します。
-
-```
-Claude Code (Hooks)  →  localhost POST (デフォルト: 4317)  →  Claude Notch オーバーレイ
-```
-
-- **v1 は表示のみ**です。Claude Code への操作送信は行いません。
-- ネットワーク通信は一切発生しません。`localhost` のみで完結します。
+- **Hover to reveal** — the notch stays hidden and slides down only when you push the cursor to the screen edge, so it never gets in the way.
+- **Auto-show on events** — notifications appear for ~2.5s (permission prompts 4s) then retreat.
+- **Five Claude Code events:**
+  | Event | Shown as |
+  |-------|----------|
+  | `Stop` | "Task complete" card (green) |
+  | `Notification` | "Needs your response" card (yellow) |
+  | `PreToolUse` / `PostToolUse` | character turns to "working" / back to idle |
+  | `SubagentStop` | character "subagent done" |
+- **Multiple sessions** — events from several Claude Code instances share one notch; each card is labelled with its project name.
+- **Flexible position** — top-center / top-left / top-right / left edge / right edge, with offset and per-monitor selection.
+- **One-click Hooks install** — registers all five hooks into `~/.claude/settings.json` for you, preserving any hooks you already have.
+- **Click-through & lightweight** — the transparent overlay never blocks your desktop, and it's display-only (v1 never sends anything back to Claude Code).
 
 ---
 
-## インストール
+## Install
 
-### インストーラーを使う場合（推奨）
+> Windows only.
 
-1. [Releases](../../releases) から `Claude Notch Setup 0.1.0.exe` をダウンロードします。
-2. ダブルクリックして実行します。
-   - **Windows SmartScreen の警告が表示される場合：** 「詳細情報」→「実行」をクリックしてください。インストーラーは現時点では未署名です。
-3. インストール先を選択してインストールを完了します。
+1. Download the latest `Claude.Notch.Setup.x.y.z.exe` from the [**Releases**](https://github.com/takaaaaaan/claude-code-notch/releases) page.
+2. Run it. The installer is **unsigned**, so Windows SmartScreen may warn you — click **More info → Run anyway**.
+3. Choose an install location and finish.
 
-### ソースから起動する場合（開発用）
+Or run from source — see [Development](#development).
+
+## First-run setup
+
+After launching, connect it to Claude Code:
+
+1. Right-click the **Claude Notch** tray icon → **設定を開く / Open settings**.
+2. Go to the **Connection** tab.
+3. Click **One-click Hooks install**. This adds the five hooks to `~/.claude/settings.json` (existing hooks are preserved).
+4. **Restart Claude Code** so it reloads its settings.
+
+Then use Claude Code normally — the notch reacts to its activity. The **Advanced** tab has **Test notification** buttons to preview each state without Claude Code.
+
+---
+
+## Settings
+
+| Tab | Contents |
+|-----|----------|
+| General | Start on Windows login, theme (system/dark/light) |
+| Connection | Port, connection status, one-click Hooks install + status |
+| Notifications | Display duration, per-event on/off (task done / permission / tool use / subagent) |
+| Appearance | Hover reveal, position preset (top-center/left/right, left/right edge), size, offset, monitor |
+| Character | Show/hide the character |
+| Advanced | Test-notification buttons (simulate each event) |
+
+## Notes
+
+- The server listens on **`127.0.0.1` only** (default port **4317**). No external network traffic.
+- After **changing the port**, re-run **One-click Hooks install** and restart Claude Code — the hook command has the port baked in.
+- v1 is **display-only**: the notch shows state but never sends actions back to Claude Code.
+
+---
+
+## Development
+
+Requires Node.js 20+ and Windows.
 
 ```bash
-git clone https://github.com/takaaaaaan/claude-notch.git
-cd claude-notch
+git clone https://github.com/takaaaaaan/claude-code-notch.git
+cd claude-code-notch
 npm install
-npm start
+npm start          # launch the app
+npm test           # unit tests (node:test)
+npm run smoke      # Electron renderer smoke test
+npm run dist       # build the Windows installer (NSIS) into dist/
 ```
 
----
+> `npm run dist` extracts code-signing helpers that contain symlinks; if it fails with "Cannot create symbolic link", enable **Windows Developer Mode** (Settings → Privacy & security → For developers) or run the terminal as Administrator. CI builds releases on a clean Windows runner, so tagged releases don't need this locally.
 
-## 初回セットアップ
+### Tech
 
-アプリを起動後、以下の手順で Claude Code と接続してください。
+Electron (main + two renderer windows) with a Node built-in `http` server. All decision logic (event normalization, window positioning, hover math, settings, hooks install) lives in pure modules unit-tested with `node:test`; the renderer is guarded by an Electron smoke test.
 
-1. タスクトレイの **Claude Notch アイコン** を右クリック → **設定を開く**
-2. **接続** タブを選択します
-3. **Hooks ワンクリック登録** ボタンをクリックします
-   - `~/.claude/settings.json` の `hooks` セクションに Stop・Notification・PreToolUse・PostToolUse・SubagentStop の **5 種類**が自動登録されます（Stop=タスク完了カード、Notification=許可待ちカード、PreToolUse/PostToolUse/SubagentStop=キャラクターの変化）
-4. **Claude Code を再起動** します（設定が読み込まれます）
+## Releasing
 
----
-
-## 設定タブ一覧
-
-| タブ | 内容 |
-|------|------|
-| 一般 | 自動起動（Windows 起動時）、テーマ（システム/ダーク/ライト） |
-| 接続 | ポート番号、接続ステータス、Hooks ワンクリック登録、登録状況表示 |
-| 通知 | 表示秒数スライダー、イベント別 ON/OFF（タスク完了 / 許可待ち / ツール実行 / サブエージェント） |
-| ノッチ表示 | ホバー表示、位置プリセット（上中央/上左/上右/左端中央/右端中央）、サイズ、横・縦オフセット、表示モニター |
-| キャラ | キャラクター表示の ON/OFF |
-| 詳細 | テスト通知ボタン（Stop / Notification / PreToolUse / SubagentStop の各イベントをシミュレート） |
-
----
-
-## ポートについて
-
-- デフォルトポートは **4317** です。
-- 受信は `localhost` のみです。外部ネットワークには一切公開されません。
-- ポート変更後は、再度「Hooks ワンクリック登録」を実行してから Claude Code を再起動する必要があります（フックコマンドにポート番号が埋め込まれているため）。
-
----
-
-## v1 の制限事項
-
-- **表示のみ（Display-only）**：Claude Code への返信・操作キャンセルなどは行いません。
-- 許可待ち（`Notification` イベント）は状態表示のみです。
-
----
-
-## ビルド（開発者向け）
-
-インストーラーをローカルでビルドするには以下を実行します：
+Pushing a tag like `v0.1.0` triggers the [release workflow](./.github/workflows/release.yml): it runs the tests, builds the installer on a Windows runner, and attaches the `.exe` to a GitHub Release.
 
 ```bash
-npm run dist
+npm version 0.1.0 --no-git-tag-version   # bump if needed
+git commit -am "release: v0.1.0"
+git tag v0.1.0
+git push origin main --tags
 ```
 
-`dist/Claude Notch Setup 0.1.0.exe` が生成されます。
+## Roadmap (post-v1)
 
-> **注意：** electron-builder は初回実行時に winCodeSign・NSIS などのヘルパーバイナリをダウンロードします。ネットワーク環境によっては数分かかる場合があります。
+- Reply / jump-to-terminal from the notch
+- Auto re-register hooks on port change
+- Real tray connection status; custom app icon
+- Sound, elapsed-time on cards, media/file/system-info widgets
 
----
+## License
 
-## 手動 E2E チェックリスト（最終動作確認）
-
-Claude Code が実際に動作する環境で以下を確認してください。自動化はできないため、人手での確認が必要です。
-
-### 事前条件
-
-- [ ] `npm start`（または インストーラー経由）でアプリが起動していること
-- [ ] 設定 → 接続 → Hooks ワンクリック登録 済み
-- [ ] Claude Code を再起動済み
-
-### 基本動作
-
-- [ ] Claude Code でファイル編集などのタスクを実行し、オーバーレイが「思考中」→「ツール実行中」へ遷移することを確認
-- [ ] Claude Code が Stop イベントを送出した後、「タスク完了」カードが約 2.5 秒表示されてから自動非表示になることを確認
-- [ ] 許可待ち（Notification イベント）が発生したとき、「許可待ち」カードが表示されることを確認
-- [ ] カードにプロジェクト名が表示されていることを確認
-
-### マルチセッション
-
-- [ ] 2 つの Claude Code を異なるプロジェクトで同時に起動する
-- [ ] 両方のプロジェクトのイベントが 1 つのオーバーレイに表示され、それぞれのカードにプロジェクト名ラベルが付いていることを確認
-
-### ホバー動作
-
-- [ ] オーバーレイにマウスカーソルを重ねると展開（または透明度変更）することを確認
-- [ ] カーソルを外すと自動で閉じることを確認
-
-### タスクトレイ
-
-- [ ] タスクトレイアイコンを右クリックして設定を開けることを確認
-- [ ] 「終了」メニューでアプリが正常終了することを確認
-
----
-
-## ライセンス
-
-MIT
+[MIT](./LICENSE) © takaaaaaan

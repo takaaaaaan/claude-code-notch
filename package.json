@@ -2,6 +2,12 @@
   "name": "claude-notch",
   "version": "0.1.0",
   "description": "Claude Code notch-style overlay for Windows",
+  "author": "takaaaaaan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/takaaaaaan/claude-code-notch.git"
+  },
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
