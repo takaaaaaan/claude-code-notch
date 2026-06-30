@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test",
+    "smoke": "electron scripts/smoke-notch.js",
     "dist": "electron-builder --win"
   },
   "devDependencies": {

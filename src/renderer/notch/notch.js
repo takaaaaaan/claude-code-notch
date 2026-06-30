@@ -1,12 +1,16 @@
 const el = (id) => document.getElementById(id);
-const notch = el('notch');
+// NOTE: do not name this `notch` — the preload exposes a non-configurable
+// global `window.notch` (the IPC API) via contextBridge, and a top-level
+// `const notch` collides with it ("Identifier 'notch' has already been
+// declared"), which aborts this whole script and leaves the notch dead.
+const notchEl = el('notch');
 let hideTimer = null;
 let hovering = false;
 
-function show() { notch.classList.add('shown'); }
+function show() { notchEl.classList.add('shown'); }
 function hideSoon(ms) {
   clearTimeout(hideTimer);
-  hideTimer = setTimeout(() => { if (!hovering) notch.classList.remove('shown'); }, ms);
+  hideTimer = setTimeout(() => { if (!hovering) notchEl.classList.remove('shown'); }, ms);
 }
 
 function setCharacter(state) {
@@ -15,7 +19,7 @@ function setCharacter(state) {
 }
 
 function showCard(cmd, durationMs) {
-  notch.classList.add('card');
+  notchEl.classList.add('card');
   el('compact').classList.add('hidden'); el('dot').classList.add('hidden');
   el('card').classList.remove('hidden'); el('badge').classList.remove('hidden'); el('sess').classList.remove('hidden');
   el('badge').className = 'badge ' + cmd.variant; el('badge').textContent = cmd.badge;
@@ -26,7 +30,7 @@ function showCard(cmd, durationMs) {
 }
 
 function showCharacterOnly(state) {
-  notch.classList.remove('card');
+  notchEl.classList.remove('card');
   el('card').classList.add('hidden'); el('badge').classList.add('hidden'); el('sess').classList.add('hidden');
   el('compact').classList.remove('hidden'); el('dot').classList.remove('hidden');
   setCharacter(state);
