@@ -1,0 +1,10 @@
+body { font-family:"Segoe UI",system-ui,sans-serif; margin:0; display:flex; min-height:100vh; background:#16181f; color:#eee; }
+#tabs { display:flex; flex-direction:column; background:#0f1116; padding:12px 0; min-width:120px; }
+#tabs button { background:none; border:0; color:#aaa; padding:10px 16px; text-align:left; cursor:pointer; }
+#tabs button.active { color:#fff; background:#d97757; }
+main { flex:1; padding:24px; }
+section { display:flex; flex-direction:column; gap:14px; max-width:480px; }
+label { display:flex; align-items:center; gap:8px; }
+input,select { background:#222; border:1px solid #333; color:#eee; padding:4px 6px; border-radius:6px; }
+button { cursor:pointer; }
+pre { background:#0f1116; padding:10px; border-radius:8px; white-space:pre-wrap; font-size:11px; }
