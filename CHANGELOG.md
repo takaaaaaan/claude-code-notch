@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-07-01
 
 ### Added
 - App icon: an orbiting-circles logo (`assets/icon.png`) is now used for the settings window, the tray, and the packaged installer/exe (previously the icon was blank/transparent in the taskbar).
@@ -48,5 +48,6 @@ First public release.
 - Tray connection status is static; no custom app icon yet.
 - The installer is unsigned (SmartScreen warning on first run).
 
+[0.3.0]: https://github.com/takaaaaaan/claude-code-notch/releases/tag/v0.3.0
 [0.2.0]: https://github.com/takaaaaaan/claude-code-notch/releases/tag/v0.2.0
 [0.1.0]: https://github.com/takaaaaaan/claude-code-notch/releases/tag/v0.1.0
